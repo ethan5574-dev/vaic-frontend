@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  body {
+    @apply bg-surface-bg text-surface-ink font-sans bg-radial-fade bg-fixed;
+    font-feature-settings: 'ss01' on, 'cv01' on;
+  }
+  ::selection {
+    @apply bg-primary-200 text-primary-800;
+  }
+  /* visible keyboard focus everywhere */
+  :focus-visible {
+    outline: 2px solid #0D47A1;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Core glass panel used across cards, navbar, modals */
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-xl border border-white/70 shadow-glass rounded-panel;
+  }
+  .glass-panel-flat {
+    @apply bg-white/80 backdrop-blur-md border border-white/60 shadow-glass-sm rounded-card;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #C4D3E0 transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #C4D3E0;
+    border-radius: 999px;
+  }
+}
