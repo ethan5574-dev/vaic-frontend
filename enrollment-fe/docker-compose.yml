@@ -5,5 +5,5 @@ services:
       dockerfile: Dockerfile
     container_name: vaic_frontend
     ports:
-      - "3000:80"
+      - "3010:80"
     restart: always
