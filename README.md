@@ -63,3 +63,5 @@ Không cần sửa bất kỳ page/component nào — service layer là seam duy
 ## Ghi chú
 
 Dự án chưa có luồng xác thực (auth) — mọi route hiện đang public, thông tin người dùng ở đầu trang là placeholder tĩnh.
+
+<!-- deploy-check -->
