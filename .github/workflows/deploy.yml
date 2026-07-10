@@ -1,0 +1,52 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: enrollment-fe/package-lock.json
+
+      - name: Install dependencies
+        working-directory: enrollment-fe
+        run: npm ci
+
+      - name: Build
+        working-directory: enrollment-fe
+        run: npm run build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Navigate to the project directory
+            # Assuming you clone the project to /var/www/vaic-frontend
+            cd /var/www/vaic-frontend
+            
+            # Pull the latest changes
+            git pull origin main
+            
+            # Navigate to frontend directory
+            cd enrollment-fe
+            
+            # Build and restart the containers
+            docker compose up --build -d
