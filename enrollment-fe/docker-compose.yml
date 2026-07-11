@@ -6,4 +6,6 @@ services:
     container_name: vaic_frontend
     ports:
       - "3010:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: always
