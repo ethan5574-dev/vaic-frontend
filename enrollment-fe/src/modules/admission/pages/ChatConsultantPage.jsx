@@ -42,11 +42,8 @@ export default function ChatConsultantPage() {
     setSending(true)
     try {
       const res = await sendChatMessage({ sessionId, message: trimmed, channel: CHANNEL })
-      setMessages((m) => [
-        ...m,
-        { role: 'assistant', text: res.reply, suggestedPrograms: res.suggestedPrograms },
-      ])
-      if (res.handoffToAdvisor) setHandoff(true)
+      setMessages((m) => [...m, { role: 'assistant', text: res.answer }])
+      if (res.handoff) setHandoff(true)
     } finally {
       setSending(false)
     }

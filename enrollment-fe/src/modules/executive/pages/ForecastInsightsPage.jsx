@@ -23,13 +23,11 @@ export default function ForecastInsightsPage() {
     setResolvingId(insightId)
     try {
       await updateInsightStatus(insightId, 'resolved')
-      setInsights((list ?? insightsData).map((i) => (i.insightId === insightId ? { ...i, status: 'resolved' } : i)))
+      setInsights((list ?? insightsData).map((i) => (i.id === insightId ? { ...i, status: 'Resolved' } : i)))
     } finally {
       setResolvingId(null)
     }
   }
-
-  const isPrelim = forecastData && forecastData.modelConfidence < 0.7
 
   return (
     <div>
@@ -47,9 +45,9 @@ export default function ForecastInsightsPage() {
           </div>
           {forecastData && (
             <div className="flex items-center gap-2">
-              {isPrelim && <Badge tone="warning">Dự báo sơ bộ</Badge>}
+              {forecastData.preliminary && <Badge tone="warning">Dự báo sơ bộ</Badge>}
               <span className="flex items-center gap-1 text-xs font-semibold text-surface-mute">
-                <Gauge className="size-3.5" /> Độ tin cậy mô hình: {formatPercent(forecastData.modelConfidence, 0)}
+                <Gauge className="size-3.5" /> Độ tin cậy mô hình: {formatPercent(forecastData.confidence, 0)}
               </span>
             </div>
           )}
@@ -78,17 +76,16 @@ export default function ForecastInsightsPage() {
             />
           ) : (
             list.map((insight) => (
-              <div key={insight.insightId} className="rounded-control border border-surface-line/80 bg-white/70 p-4">
+              <div key={insight.id} className="rounded-control border border-surface-line/80 bg-white/70 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="mb-1.5 flex items-center gap-2">
                       <Badge tone={priorityTone(insight.priority)}>{insight.priority}</Badge>
-                      <span className="text-[11px] font-medium text-surface-faint">{insight.program}</span>
                     </div>
                     <p className="text-sm font-bold text-surface-ink">{insight.title}</p>
                     <p className="mt-1 text-xs text-surface-mute">{insight.explanation}</p>
                   </div>
-                  {insight.status === 'resolved' ? (
+                  {insight.status === 'Resolved' ? (
                     <Badge tone="teal" dot className="shrink-0">
                       Đã xử lý
                     </Badge>
@@ -97,8 +94,8 @@ export default function ForecastInsightsPage() {
                       variant="outline"
                       size="sm"
                       icon={CheckCircle2}
-                      loading={resolvingId === insight.insightId}
-                      onClick={() => handleResolve(insight.insightId)}
+                      loading={resolvingId === insight.id}
+                      onClick={() => handleResolve(insight.id)}
                       className="shrink-0"
                     >
                       Đã xử lý

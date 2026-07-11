@@ -1,33 +1,80 @@
 import { useState } from 'react'
-import { Check, Clock, Circle, GraduationCap, CalendarClock, PercentCircle, Wallet } from 'lucide-react'
+import { Check, Clock, Circle, Search, GraduationCap, CalendarClock, PercentCircle, Wallet } from 'lucide-react'
 import PageHeader from '../../../components/layout/PageHeader'
 import Card, { CardBody, CardHeader, CardTitle, CardSubtitle } from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import Badge from '../../../components/ui/Badge'
-import Skeleton from '../../../components/ui/Skeleton'
-import { useAsync } from '../../../hooks/useAsync'
+import { Field, Input } from '../../../components/ui/Input'
 import { getLeadStatus } from '../../../services/leadsService'
 import { decideOffer } from '../../../services/offersService'
 import { formatDate, formatNumber } from '../../../lib/utils'
-
-/** No auth/session flow in this handoff yet — demo lead id stands in for the logged-in student's lead. */
-const DEMO_LEAD_ID = 'L20260041'
+import { ApiError } from '../../../services/client'
 
 const STATUS_TONE = { Accepted: 'teal', Declined: 'danger', Pending: 'warning' }
 
+// LeadStatus enum order (mirrors backend funnel.service.ts STAGE_ORDER/LABELS).
+// getLeadStatus only returns a status snapshot, not a per-step history, so
+// the timeline below is derived client-side from that single status value.
+const STAGE_ORDER = ['NEW', 'APPLICATION_SUBMITTED', 'INTERVIEW', 'OFFERED', 'ENROLLED']
+const STAGE_LABELS = {
+  NEW: 'Lead',
+  APPLICATION_SUBMITTED: 'Nộp hồ sơ',
+  INTERVIEW: 'Phỏng vấn',
+  OFFERED: 'Offer',
+  ENROLLED: 'Nhập học',
+}
+
+function buildTimeline(status) {
+  if (status === 'REJECTED') {
+    return [
+      { step: 'Lead', status: 'done' },
+      { step: 'Không trúng tuyển', status: 'current' },
+    ]
+  }
+  const currentIndex = STAGE_ORDER.indexOf(status)
+  return STAGE_ORDER.map((stage, i) => ({
+    step: STAGE_LABELS[stage],
+    status: i < currentIndex ? 'done' : i === currentIndex ? 'current' : 'upcoming',
+  }))
+}
+
 export default function ApplicationStatusPage() {
-  const { data, loading } = useAsync(() => getLeadStatus(DEMO_LEAD_ID), [])
+  const [leadIdInput, setLeadIdInput] = useState('')
+  const [leadId, setLeadId] = useState(null)
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const [offer, setOffer] = useState(null)
   const [deciding, setDeciding] = useState(false)
 
+  // No Offer lookup endpoint exists yet (getLeadStatus doesn't join Offer) —
+  // this stays null until that gap is closed, so the card below never renders.
   const currentOffer = offer ?? data?.offer
+
+  async function handleLookup(e) {
+    e.preventDefault()
+    const id = leadIdInput.trim()
+    if (!id) return
+    setLeadId(id)
+    setLoading(true)
+    setError(null)
+    setData(null)
+    setOffer(null)
+    try {
+      setData(await getLeadStatus(id))
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function handleDecision(decision) {
     if (!currentOffer || currentOffer.acceptanceStatus !== 'Pending') return
     setDeciding(true)
     try {
       const res = await decideOffer(currentOffer.offerId, decision)
-      setOffer({ ...currentOffer, acceptanceStatus: res.status, decisionDate: res.decisionDate, nextStep: res.nextStep })
+      setOffer({ ...currentOffer, acceptanceStatus: res.acceptanceStatus, decisionDate: res.decisionDate })
     } finally {
       setDeciding(false)
     }
@@ -38,28 +85,51 @@ export default function ApplicationStatusPage() {
       <PageHeader
         ucRef="UC-03 / UC-04"
         title="Hồ sơ & Offer nhập học"
-        description="Theo dõi tiến trình xử lý hồ sơ và phản hồi Offer nhập học của bạn."
+        description="Nhập mã hồ sơ bạn nhận được khi đăng ký để theo dõi tiến trình xử lý và phản hồi Offer nhập học."
       />
 
       <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>Tiến trình hồ sơ</CardTitle>
-            <CardSubtitle>Mã hồ sơ {DEMO_LEAD_ID}</CardSubtitle>
-          </div>
-          {data && <Badge tone="primary">{data.status}</Badge>}
-        </CardHeader>
-        <CardBody>
-          {loading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
+        <CardBody className="pt-6">
+          <form className="flex items-end gap-3" onSubmit={handleLookup}>
+            <Field label="Mã hồ sơ" className="flex-1">
+              <Input
+                value={leadIdInput}
+                onChange={(e) => setLeadIdInput(e.target.value)}
+                placeholder="Mã hồ sơ nhận được sau khi đăng ký"
+              />
+            </Field>
+            <Button type="submit" icon={Search} loading={loading}>
+              Tra cứu
+            </Button>
+          </form>
+        </CardBody>
+      </Card>
+
+      {error && (
+        <Card className="mt-5">
+          <CardBody className="pt-6 text-sm text-danger-600">
+            {error instanceof ApiError && error.status === 404
+              ? `Không tìm thấy hồ sơ với mã "${leadId}". Vui lòng kiểm tra lại mã hồ sơ.`
+              : 'Có lỗi khi tra cứu hồ sơ. Vui lòng thử lại.'}
+          </CardBody>
+        </Card>
+      )}
+
+      {data && (
+        <Card className="mt-5">
+          <CardHeader>
+            <div>
+              <CardTitle>Tiến trình hồ sơ</CardTitle>
+              <CardSubtitle>
+                Mã hồ sơ {data.leadId} · Cập nhật lần cuối {formatDate(data.updatedAt)}
+              </CardSubtitle>
             </div>
-          ) : (
+            <Badge tone="primary">{data.status}</Badge>
+          </CardHeader>
+          <CardBody>
             <ol className="relative ml-3.5 border-l-2 border-surface-line pl-6">
-              {data.timeline.map((item, i) => (
-                <li key={item.step} className={i === data.timeline.length - 1 ? '' : 'pb-7'}>
+              {buildTimeline(data.status).map((item, i, arr) => (
+                <li key={item.step} className={i === arr.length - 1 ? '' : 'pb-7'}>
                   <TimelineDot status={item.status} />
                   <p
                     className={`text-sm font-semibold ${
@@ -68,15 +138,12 @@ export default function ApplicationStatusPage() {
                   >
                     {item.step}
                   </p>
-                  <p className="mt-0.5 text-xs text-surface-mute">
-                    {item.date ? formatDate(item.date) : 'Chưa xác định'}
-                  </p>
                 </li>
               ))}
             </ol>
-          )}
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+      )}
 
       {currentOffer && (
         <Card className="mt-5">
@@ -135,8 +202,7 @@ export default function ApplicationStatusPage() {
               </div>
             ) : (
               <div className="mt-6 rounded-control bg-surface-bgAlt/70 px-4 py-3 text-sm text-surface-mute">
-                Bạn đã phản hồi Offer này vào {formatDate(currentOffer.decisionDate)}.{' '}
-                {currentOffer.nextStep && <span className="font-medium text-surface-ink">{currentOffer.nextStep}</span>}
+                Bạn đã phản hồi Offer này vào {formatDate(currentOffer.decisionDate)}.
               </div>
             )}
             <p className="mt-3 text-[11px] text-surface-faint">

@@ -1,20 +1,20 @@
-import { NavLink } from 'react-router-dom'
-import { BrainCircuit, Search, Bell, ChevronDown } from 'lucide-react'
-import { MODULES } from '../../config/navigation'
+import { BrainCircuit, Search, Bell, LogOut } from 'lucide-react'
 import { Avatar } from '../ui/ProgressBar'
 import { cn } from '../../lib/utils'
 
-const ACCENT_ACTIVE = {
+const ACCENT_BADGE = {
   primary: 'bg-primary-500 text-white shadow-glass-sm',
   teal: 'bg-teal-500 text-white shadow-glass-sm',
   aqua: 'bg-primary-500 text-white shadow-glass-sm',
 }
 
 /**
- * TopNavbar — sticky glass bar: brand, module switcher (3 module tabs), AI status
- * badge, search, notifications, and user profile.
+ * TopNavbar — sticky glass bar for a single actor's screen: brand, that
+ * actor's module badge, AI status, and (when authenticated) the logged-in
+ * user + logout. Each actor (Admission Portal / Advisor / Executive) gets
+ * its own AppShell instance — there's no cross-actor switcher here.
  */
-export default function TopNavbar({ activeModuleId }) {
+export default function TopNavbar({ module, session, onLogout }) {
   return (
     <header className="sticky top-0 z-40 px-4 pt-4">
       <div className="glass-panel-flat flex h-16 items-center gap-4 px-4">
@@ -33,26 +33,18 @@ export default function TopNavbar({ activeModuleId }) {
 
         <div className="h-8 w-px bg-surface-line/80" />
 
-        {/* Module switcher */}
-        <nav className="flex flex-1 items-center gap-1 overflow-x-auto scrollbar-thin">
-          {MODULES.map((mod) => (
-            <NavLink
-              key={mod.id}
-              to={mod.pages[0].path}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-2 whitespace-nowrap rounded-control px-3.5 py-2 text-xs font-bold transition-colors',
-                  isActive || activeModuleId === mod.id
-                    ? ACCENT_ACTIVE[mod.accent]
-                    : 'text-surface-mute hover:bg-surface-bgAlt hover:text-surface-ink',
-                )
-              }
-            >
-              <mod.icon className="size-4" strokeWidth={2.25} />
-              {mod.shortLabel}
-            </NavLink>
-          ))}
-        </nav>
+        {/* Current actor's module — fixed label, not a switcher */}
+        <div className="flex flex-1 items-center gap-2 overflow-x-auto scrollbar-thin">
+          <span
+            className={cn(
+              'flex items-center gap-2 whitespace-nowrap rounded-control px-3.5 py-2 text-xs font-bold',
+              ACCENT_BADGE[module.accent],
+            )}
+          >
+            <module.icon className="size-4" strokeWidth={2.25} />
+            {module.label}
+          </span>
+        </div>
 
         <div className="hidden h-8 w-px bg-surface-line/80 md:block" />
 
@@ -74,14 +66,28 @@ export default function TopNavbar({ activeModuleId }) {
             <Bell className="size-4" />
             <span className="absolute right-2 top-2 size-1.5 rounded-full bg-danger-500" />
           </button>
-          <button className="ml-1 flex items-center gap-2 rounded-control py-1.5 pl-1.5 pr-2 hover:bg-surface-bgAlt">
-            <Avatar name="Minh Anh Trần" size="sm" />
-            <span className="hidden text-left leading-tight lg:block">
-              <span className="block text-xs font-bold text-surface-ink">Minh Anh Trần</span>
-              <span className="block text-[10px] text-surface-faint">Trưởng phòng Tuyển sinh</span>
-            </span>
-            <ChevronDown className="hidden size-3.5 text-surface-faint lg:block" />
-          </button>
+
+          {session && (
+            <>
+              <div className="mx-1 h-8 w-px bg-surface-line/80" />
+              <span className="hidden items-center gap-2 pl-1 lg:flex">
+                <Avatar name={session.email} size="sm" />
+                <span className="text-left leading-tight">
+                  <span className="block max-w-[160px] truncate text-xs font-bold text-surface-ink">
+                    {session.email}
+                  </span>
+                  <span className="block text-[10px] text-surface-faint">{session.role}</span>
+                </span>
+              </span>
+              <button
+                onClick={onLogout}
+                title="Đăng xuất"
+                className="flex size-9 items-center justify-center rounded-control text-surface-mute hover:bg-danger-50 hover:text-danger-600"
+              >
+                <LogOut className="size-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>

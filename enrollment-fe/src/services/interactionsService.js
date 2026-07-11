@@ -1,24 +1,37 @@
-import { mockRequest } from './client'
+import { mockRequest, request } from './client'
 import { MOCK_INTERACTIONS } from '../mock/interactions'
+
+// LeadQueuePage's INTERACTION_CHANNELS/INTERACTION_TYPES (mock/interactions.js)
+// don't line up 1:1 with backend's InteractionChannel/InteractionType enums.
+// 'CallCenter' and 'Note' below are best-effort guesses — confirm with BE/product.
+const CHANNEL_MAP = { Call: 'CallCenter', 'Zalo OA': 'Zalo', Facebook: 'Facebook', Email: 'Email', Website: 'Web' }
+const TYPE_MAP = { Call: 'Call', 'Chat AI': 'Chat', 'Gặp trực tiếp': 'Note', Email: 'Email' }
 
 /**
  * logInteraction — UC-07 "Ghi nhận tương tác với Lead"
  * POST /api/v1/interactions
- * body: { leadId, channel, interactionType, duration?, notes, followupDate? }
+ * body: CreateInteractionDto { leadId, channel, interactionType, duration?, notes?, followupDate? }
  * returns: { interactionId, status: 'saved' }
  */
-export async function logInteraction(payload) {
-  return mockRequest({
-    interactionId: `INT${Math.floor(10000 + Math.random() * 90000)}`,
-    status: 'saved',
-    _submitted: payload,
+export async function logInteraction({ leadId, channel, type, duration, notes, followupDate }) {
+  return request('/interactions', {
+    method: 'POST',
+    auth: 'advisor',
+    body: {
+      leadId,
+      channel: CHANNEL_MAP[channel] ?? channel,
+      interactionType: TYPE_MAP[type] ?? type,
+      duration: duration === '' ? undefined : Number(duration),
+      notes,
+      followupDate,
+    },
   })
 }
 
 /**
  * getInteractionsByLead — supporting read used by the Lead detail drawer.
- * NOTE: not yet in the SOP's endpoint table — proposed contract, confirm
- * with BE before implementation: GET /api/v1/leads/{leadId}/interactions
+ * NOT implemented on the backend yet (interactions.controller.ts only has
+ * POST) — stays on mock data until that endpoint exists.
  */
 export async function getInteractionsByLead(leadId) {
   return mockRequest(MOCK_INTERACTIONS[leadId] ?? [])

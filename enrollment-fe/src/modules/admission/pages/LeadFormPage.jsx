@@ -36,6 +36,7 @@ const INITIAL_FORM = {
   contactChannel: CONTACT_CHANNELS[0],
   referralSource: '',
   hasScholarshipInterest: false,
+  phoneNumber: '',
 }
 
 /** Validation mirrors the SOP's Validation column for UC-01. */
@@ -59,6 +60,7 @@ function validateStep(step, form) {
   if (step === 2) {
     if (!form.programInterest) errors.programInterest = 'Vui lòng chọn ngành quan tâm.'
     if (!form.contactChannel) errors.contactChannel = 'Vui lòng chọn kênh liên hệ.'
+    if (!/^0\d{9}$/.test(form.phoneNumber)) errors.phoneNumber = 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0.'
   }
   return errors
 }
@@ -227,6 +229,14 @@ export default function LeadFormPage() {
 
             {step === 2 && (
               <>
+                <Field label="Số điện thoại" required error={errors.phoneNumber}>
+                  <Input
+                    type="tel"
+                    value={form.phoneNumber}
+                    onChange={(e) => update('phoneNumber', e.target.value)}
+                    placeholder="0912345678"
+                  />
+                </Field>
                 <Field label="Ngành quan tâm" required error={errors.programInterest}>
                   <Select
                     value={form.programInterest}

@@ -5,7 +5,6 @@ import {
   ListFilter,
   Gauge,
   BarChart3,
-  Compass,
   Sparkles,
   GraduationCap,
   Headset,
@@ -15,8 +14,12 @@ import {
 /**
  * Single source of truth for the 3-module IA of the platform.
  * Mirrors §6.2 / §7 of the SOP: Admission Portal, Advisor Dashboard, Executive Dashboard.
- * Each module groups the UC pages that belong to it, so Sidebar + Router + Breadcrumbs
- * stay in sync without duplicating route strings.
+ * Each module groups the UC pages that belong to it, so Sidebar + Router stay in sync
+ * without duplicating route strings.
+ *
+ * The 3 modules are separate actors (public visitor, advisor, executive) and never
+ * share a screen — each is rendered by its own AppShell instance (see App.jsx), not
+ * a shared switcher. Import the named module you need, not MODULES[i] by index.
  */
 export const MODULES = [
   {
@@ -96,18 +99,6 @@ export const MODULES = [
   },
 ]
 
-export const DEFAULT_PATH = MODULES[0].pages[0].path
+export const [ADMISSION_MODULE, ADVISOR_MODULE, EXECUTIVE_MODULE] = MODULES
 
-export function findModuleByPath(pathname) {
-  return MODULES.find((m) => pathname.startsWith(m.basePath)) ?? MODULES[0]
-}
-
-export function findPageByPath(pathname) {
-  for (const mod of MODULES) {
-    const page = mod.pages.find((p) => p.path === pathname)
-    if (page) return { module: mod, page }
-  }
-  return { module: MODULES[0], page: MODULES[0].pages[0] }
-}
-
-export const COMPASS_ICON = Compass
+export const DEFAULT_PATH = ADMISSION_MODULE.pages[0].path

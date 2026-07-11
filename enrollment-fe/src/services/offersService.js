@@ -1,20 +1,19 @@
-import { mockRequest } from './client'
+import { request } from './client'
+
+// ApplicationStatusPage calls decideOffer('Accepted' | 'Declined');
+// DecideOfferDto's OfferAcceptanceStatus enum uses 'ACCEPTED' | 'REJECTED'.
+const DECISION_MAP = { Accepted: 'ACCEPTED', Declined: 'REJECTED' }
 
 /**
  * decideOffer — UC-04 "Chấp nhận / từ chối Offer nhập học"
  * PATCH /api/v1/offers/{offerId}/decision
- * body: { decision: 'Accepted' | 'Declined' }
- * returns: { status, decisionDate, nextStep }
- * Business rule: only one decision allowed; ignored client-side here, must be
- * enforced by backend once real API is wired up.
+ * returns: { offerId, acceptanceStatus, decisionDate } — note field name is
+ * `acceptanceStatus`, not `status`, and there's no `nextStep`.
+ * Business rule (only one decision allowed) is enforced server-side.
  */
 export async function decideOffer(offerId, decision) {
-  return mockRequest({
-    status: decision,
-    decisionDate: new Date().toISOString().slice(0, 10),
-    nextStep:
-      decision === 'Accepted'
-        ? 'Hoàn tất hồ sơ nhập học'
-        : 'Cảm ơn bạn đã phản hồi — chúc bạn tìm được lựa chọn phù hợp',
+  return request(`/offers/${offerId}/decision`, {
+    method: 'PATCH',
+    body: { decision: DECISION_MAP[decision] ?? decision },
   })
 }
