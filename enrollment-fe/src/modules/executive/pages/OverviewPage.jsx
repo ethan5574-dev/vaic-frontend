@@ -12,7 +12,8 @@ export default function OverviewPage() {
   const { data: kpi, loading: kpiLoading } = useAsync(() => getExecutiveKpi('YTD'), [])
   const { data: funnel, loading: funnelLoading } = useAsync(() => getFunnel('YTD'), [])
 
-  const targetTrend = kpi?.comparedToTarget < 0 ? 'down' : 'up'
+  const conversionDelta = kpi?.comparedToTarget?.conversionRate?.delta ?? 0
+  const targetTrend = conversionDelta < 0 ? 'down' : 'up'
 
   return (
     <div>
@@ -32,7 +33,7 @@ export default function OverviewPage() {
               value={formatPercent(kpi.conversionRate)}
               icon={TrendingUp}
               accent="primary"
-              delta={formatPercent(Math.abs(kpi.comparedToTarget))}
+              delta={formatPercent(Math.abs(conversionDelta))}
               trend={targetTrend}
               hint="So với mục tiêu"
             />
@@ -52,7 +53,7 @@ export default function OverviewPage() {
             />
             <StatCard
               label="Chi phí trên mỗi Lead (CAC)"
-              value={`${formatNumber(kpi.cac)} đ`}
+              value={kpi.cac === null ? '—' : `${formatNumber(kpi.cac)} đ`}
               icon={Target}
               accent="warning"
             />

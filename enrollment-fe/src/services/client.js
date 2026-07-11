@@ -5,16 +5,11 @@
  * exposes async functions whose name/shape mirrors an endpoint documented
  * in the SOP's "Bảng đặc tả kỹ thuật" tables (§ Phụ lục B).
  *
- * Right now `request()` resolves mock fixtures with a fake delay so pages
- * can be built against realistic loading/empty states. When the backend is
- * ready, only THIS function needs to change to a real `fetch` call — no
- * page or component should import mock data directly.
- *
- * Example future swap:
- *   const res = await fetch(`${BASE_URL}${path}`, options)
- *   if (!res.ok) throw new ApiError(res.status, await res.text())
- *   return res.json()
+ * `getInteractionsByLead` (interactionsService.js) still uses `mockRequest`
+ * because that endpoint doesn't exist on the backend yet.
  */
+
+import { getSession, clearSession } from '../lib/authStorage'
 
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
@@ -39,20 +34,30 @@ export function mockRequest(data, { delay = MOCK_DELAY_MS } = {}) {
 }
 
 /**
- * request — placeholder for the real HTTP call. Swapping mock → real backend
- * happens by implementing this and pointing each *Service function at it
- * instead of mockRequest. Kept here so the migration touches one file.
+ * request — the real HTTP call every *Service.js function goes through.
+ * Pass `auth: 'advisor' | 'executive'` for routes behind that domain's JWT
+ * guard — the matching token (see lib/authStorage.js) is attached as a
+ * Bearer header, and a 401 response clears that domain's session so the
+ * next render of RequireAuth redirects back to its login page.
  */
-export async function request(path, { method = 'GET', body, params } = {}) {
+export async function request(path, { method = 'GET', body, params, auth } = {}) {
   const url = new URL(`${BASE_URL}${path}`, window.location.origin)
   if (params) {
     Object.entries(params).forEach(([k, v]) => v !== undefined && url.searchParams.set(k, v))
   }
+  const headers = { 'Content-Type': 'application/json' }
+  if (auth) {
+    const session = getSession(auth)
+    if (session?.token) headers.Authorization = `Bearer ${session.token}`
+  }
   const res = await fetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   })
+  if (res.status === 401 && auth) {
+    clearSession(auth)
+  }
   if (!res.ok) {
     throw new ApiError(res.status, await res.text().catch(() => res.statusText))
   }

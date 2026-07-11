@@ -1,9 +1,11 @@
 import { AlertTriangle } from 'lucide-react'
-import { formatNumber, formatPercent, cn } from '../../lib/utils'
+import { formatNumber, cn } from '../../lib/utils'
 
 /**
  * FunnelSteps — proportional-width bars representing each funnel stage.
- * stages: [{ name, count, conversionPct, dropAlert? }]
+ * stages: [{ name, count, conversionPct, needsAttention? }]
+ * conversionPct is already 0-100 (backend computes it as a percentage, not a
+ * 0-1 ratio) — render it directly rather than through formatPercent.
  */
 export default function FunnelSteps({ stages }) {
   const max = Math.max(...stages.map((s) => s.count), 1)
@@ -16,7 +18,7 @@ export default function FunnelSteps({ stages }) {
             <div className="mb-1.5 flex items-center justify-between text-xs">
               <span className="flex items-center gap-1.5 font-semibold text-surface-ink">
                 {stage.name}
-                {stage.dropAlert && (
+                {stage.needsAttention && (
                   <span className="inline-flex items-center gap-1 rounded-pill bg-danger-50 px-2 py-0.5 text-[10px] font-bold text-danger-600">
                     <AlertTriangle className="size-3" />
                     Cần chú ý
@@ -25,18 +27,14 @@ export default function FunnelSteps({ stages }) {
               </span>
               <span className="font-bold text-surface-mute">
                 {formatNumber(stage.count)}
-                {i > 0 && (
-                  <span className="ml-1.5 text-surface-faint">
-                    ({formatPercent(stage.conversionPct)})
-                  </span>
-                )}
+                {i > 0 && <span className="ml-1.5 text-surface-faint">({stage.conversionPct}%)</span>}
               </span>
             </div>
             <div className="h-7 w-full overflow-hidden rounded-[10px] bg-surface-bgAlt">
               <div
                 className={cn(
                   'flex h-full items-center rounded-[10px] transition-[width] duration-500',
-                  stage.dropAlert
+                  stage.needsAttention
                     ? 'bg-gradient-to-r from-danger-500/85 to-danger-500/60'
                     : 'bg-gradient-to-r from-primary-500 to-primary-400',
                 )}

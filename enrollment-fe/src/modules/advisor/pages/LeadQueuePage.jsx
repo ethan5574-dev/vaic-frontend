@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Phone, MapPin, Lightbulb, CheckCircle2 } from 'lucide-react'
+import { Phone, Lightbulb, CheckCircle2 } from 'lucide-react'
 import PageHeader from '../../../components/layout/PageHeader'
 import Card, { CardBody } from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
@@ -9,34 +9,19 @@ import Drawer from '../../../components/ui/Drawer'
 import Skeleton from '../../../components/ui/Skeleton'
 import { Field, Input, Select, Textarea } from '../../../components/ui/Input'
 import { useAsync } from '../../../hooks/useAsync'
-import { getAdvisorLeads, getNextBestAction } from '../../../services/leadsService'
+import { getAdvisorLeads, getNextBestAction, getLeadDetail } from '../../../services/leadsService'
 import { logInteraction } from '../../../services/interactionsService'
 import { INTERACTION_CHANNELS, INTERACTION_TYPES } from '../../../mock/interactions'
 import { formatDate } from '../../../lib/utils'
-
-/** No auth flow in this handoff yet — demo advisor id stands in for the logged-in advisor. */
-const DEMO_ADVISOR_ID = 'ADV001'
+import { getSession } from '../../../lib/authStorage'
 
 const COLUMNS = [
-  {
-    key: 'name',
-    header: 'Lead',
-    render: (row) => (
-      <div>
-        <p className="font-semibold text-surface-ink">{row.name}</p>
-        <p className="mt-0.5 flex items-center gap-1 text-xs text-surface-mute">
-          <MapPin className="size-3" /> {row.province}
-        </p>
-      </div>
-    ),
-  },
-  { key: 'program', header: 'Ngành quan tâm' },
-  { key: 'channel', header: 'Kênh' },
+  { key: 'name', header: 'Lead' },
   {
     key: 'rank',
     header: 'Xếp hạng',
     render: (row) => (
-      <Badge tone={rankTone(row.rank)} pulse={row.rank === 'Hot'}>
+      <Badge tone={rankTone(row.rank)} pulse={row.rank === 'HOT'}>
         {row.rank}
       </Badge>
     ),
@@ -53,8 +38,10 @@ const COLUMNS = [
 const INITIAL_INTERACTION = { channel: INTERACTION_CHANNELS[0], type: INTERACTION_TYPES[0], duration: '', notes: '', followupDate: '' }
 
 export default function LeadQueuePage() {
-  const { data: leads, loading } = useAsync(() => getAdvisorLeads(DEMO_ADVISOR_ID), [])
+  const advisorId = getSession('advisor')?.id
+  const { data: leads, loading } = useAsync(() => getAdvisorLeads(advisorId), [advisorId])
   const [selectedLead, setSelectedLead] = useState(null)
+  const [leadDetail, setLeadDetail] = useState(null)
   const [nba, setNba] = useState(null)
   const [nbaLoading, setNbaLoading] = useState(false)
   const [form, setForm] = useState(INITIAL_INTERACTION)
@@ -69,10 +56,13 @@ export default function LeadQueuePage() {
       setNba(res)
       setNbaLoading(false)
     })
+    getLeadDetail(advisorId, selectedLead.leadId).then(setLeadDetail)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLead])
 
   function openLead(row) {
     setSelectedLead(row)
+    setLeadDetail(null)
     setForm(INITIAL_INTERACTION)
     setSaved(false)
   }
@@ -121,7 +111,9 @@ export default function LeadQueuePage() {
         open={!!selectedLead}
         onClose={closeDrawer}
         title={selectedLead?.name}
-        subtitle={selectedLead ? `${selectedLead.leadId} · ${selectedLead.program}` : ''}
+        subtitle={
+          selectedLead ? `${selectedLead.leadId}${leadDetail ? ` · ${leadDetail.programInterest}` : ''}` : ''
+        }
         footer={
           !saved && (
             <Button className="w-full" onClick={handleSaveInteraction} loading={saving} icon={CheckCircle2}>
@@ -133,16 +125,18 @@ export default function LeadQueuePage() {
         {selectedLead && (
           <div className="space-y-5">
             <div className="flex items-center gap-2">
-              <Badge tone={rankTone(selectedLead.rank)} pulse={selectedLead.rank === 'Hot'}>
+              <Badge tone={rankTone(selectedLead.rank)} pulse={selectedLead.rank === 'HOT'}>
                 {selectedLead.rank}
               </Badge>
               <span className="text-xs text-surface-mute">Điểm AI: {selectedLead.score}</span>
-              <a
-                href={`tel:${selectedLead.phone}`}
-                className="ml-auto flex items-center gap-1 text-xs font-semibold text-primary-600 hover:underline"
-              >
-                <Phone className="size-3.5" /> {selectedLead.phone}
-              </a>
+              {leadDetail?.phoneNumber && (
+                <a
+                  href={`tel:${leadDetail.phoneNumber}`}
+                  className="ml-auto flex items-center gap-1 text-xs font-semibold text-primary-600 hover:underline"
+                >
+                  <Phone className="size-3.5" /> {leadDetail.phoneNumber}
+                </a>
+              )}
             </div>
 
             <div className="rounded-control border border-primary-200 bg-primary-50/60 px-4 py-3.5">
