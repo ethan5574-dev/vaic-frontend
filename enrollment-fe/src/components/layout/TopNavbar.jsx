@@ -27,7 +27,7 @@ export default function TopNavbar({ module, session, onLogout }) {
             <p className="text-[13px] font-extrabold tracking-tight text-surface-ink">
               Enrollment Intelligence
             </p>
-            <p className="text-[10px] font-medium text-surface-faint">AI-Native Multi-Agent Platform</p>
+            <p className="text-[10px] font-medium text-surface-faint">AI-Native Multi-Agent platform</p>
           </div>
         </div>
 
