@@ -1,104 +1,35 @@
-import {
-  UserRoundPlus,
-  MessagesSquare,
-  FileClock,
-  ListFilter,
-  Gauge,
-  BarChart3,
-  Sparkles,
-  GraduationCap,
-  Headset,
-  LineChart,
-} from 'lucide-react'
+import { Sparkles, LayoutDashboard } from 'lucide-react'
 
 /**
- * Single source of truth for the 3-module IA of the platform.
- * Mirrors §6.2 / §7 of the SOP: Admission Portal, Advisor Dashboard, Executive Dashboard.
- * Each module groups the UC pages that belong to it, so Sidebar + Router stay in sync
- * without duplicating route strings.
- *
- * The 3 modules are separate actors (public visitor, advisor, executive) and never
- * share a screen — each is rendered by its own AppShell instance (see App.jsx), not
- * a shared switcher. Import the named module you need, not MODULES[i] by index.
+ * Single source of truth for the app's IA. Sidebar + Router stay in sync
+ * without duplicating route strings — add a module here, then wire its
+ * routes in App.jsx. Each module is rendered by its own AppShell instance
+ * (see App.jsx), never a shared switcher.
  */
 export const MODULES = [
   {
-    id: 'admission',
-    label: 'Admission Portal',
-    shortLabel: 'Admission',
-    description: 'Học sinh & Phụ huynh',
-    icon: GraduationCap,
+    id: 'example',
+    label: 'Example Module',
+    shortLabel: 'Example',
+    description: 'Module mẫu',
+    icon: Sparkles,
     accent: 'primary',
-    basePath: '/admission',
+    basePath: '/example',
     pages: [
       {
-        path: '/admission/dang-ky',
-        label: 'Đăng ký tư vấn',
-        ucRef: 'UC-01',
-        icon: UserRoundPlus,
-      },
-      {
-        path: '/admission/tu-van-ai',
-        label: 'Tư vấn AI',
-        ucRef: 'UC-02',
-        icon: MessagesSquare,
-      },
-      {
-        path: '/admission/ho-so',
-        label: 'Hồ sơ & Offer',
-        ucRef: 'UC-03 / UC-04',
-        icon: FileClock,
-      },
-    ],
-  },
-  {
-    id: 'advisor',
-    label: 'Advisor Dashboard',
-    shortLabel: 'Advisor',
-    description: 'Tư vấn viên tuyển sinh',
-    icon: Headset,
-    accent: 'teal',
-    basePath: '/advisor',
-    pages: [
-      {
-        path: '/advisor/leads',
-        label: 'Hàng đợi Lead',
-        ucRef: 'UC-05 / UC-06 / UC-07',
-        icon: ListFilter,
-      },
-      {
-        path: '/advisor/hieu-suat',
-        label: 'Hiệu suất cá nhân',
-        ucRef: 'UC-08',
-        icon: Gauge,
-      },
-    ],
-  },
-  {
-    id: 'executive',
-    label: 'Executive Dashboard',
-    shortLabel: 'Executive',
-    description: 'Ban Giám đốc',
-    icon: LineChart,
-    accent: 'aqua',
-    basePath: '/executive',
-    pages: [
-      {
-        path: '/executive/tong-quan',
-        label: 'Tổng quan KPI',
-        ucRef: 'UC-09 / UC-10',
-        icon: BarChart3,
-      },
-      {
-        path: '/executive/du-bao',
-        label: 'Dự báo & AI Insight',
-        ucRef: 'UC-11 / UC-12',
+        path: '/example',
+        label: 'Trang mẫu',
         icon: Sparkles,
+      },
+      {
+        path: '/example/dashboard',
+        label: 'Bảng điều khiển',
+        icon: LayoutDashboard,
       },
     ],
   },
 ]
 
-export const [ADMISSION_MODULE, ADVISOR_MODULE, EXECUTIVE_MODULE] = MODULES
+export const [EXAMPLE_MODULE] = MODULES
 
-export const DEFAULT_PATH = ADMISSION_MODULE.pages[0].path
+export const DEFAULT_PATH = EXAMPLE_MODULE.pages[0].path

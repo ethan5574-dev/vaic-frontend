@@ -1,25 +1,17 @@
-# AI Enrollment Intelligence Platform
+# React Frontend Template
 
-Frontend cho nền tảng tuyển sinh AI-Native — hỗ trợ 3 nhóm người dùng trong quy trình tuyển sinh: **học sinh/phụ huynh**, **tư vấn viên** và **ban giám đốc**, xoay quanh trợ lý AI chấm điểm Lead, gợi ý hành động và dự báo tuyển sinh.
+Base project cho các frontend React + Vite mới. Đã có sẵn design system, layout đa-actor (nhiều dashboard, mỗi actor 1 AppShell riêng), auth guard theo JWT domain, và pipeline CI/CD — chỉ cần thêm module nghiệp vụ thật.
 
 ## Tổng quan
 
-Ứng dụng gồm 3 module, tương ứng 3 vai trò sử dụng:
-
-| Module | Đối tượng | Trang chính |
-|---|---|---|
-| **Admission Portal** | Học sinh / Phụ huynh | Đăng ký tư vấn · Chat với AI Virtual Consultant · Theo dõi hồ sơ & phản hồi Offer nhập học |
-| **Advisor Dashboard** | Tư vấn viên tuyển sinh | Hàng đợi Lead ưu tiên (AI chấm điểm) & Next Best Action · Hiệu suất cá nhân |
-| **Executive Dashboard** | Ban Giám đốc | Tổng quan KPI & phễu tuyển sinh · Dự báo nhập học & AI Insight |
-
-Toàn bộ nghiệp vụ, use case và contract API bám sát tài liệu SOP đi kèm (`SOP_UseCase_UserStory_AI_Enrollment.md`).
+Kèm sẵn 1 module mẫu (`example`) minh hoạ đầy đủ luồng: trang public, trang login, trang được bảo vệ bởi `RequireAuth`. Copy module này khi thêm actor/dashboard mới.
 
 ## Công nghệ sử dụng
 
 - **React 18** + **Vite** — SPA, dev server nhanh
 - **React Router v6** — routing
 - **Tailwind CSS** — design system riêng (design tokens, glass-panel UI)
-- **Recharts** — biểu đồ dự báo / phễu chuyển đổi
+- **Recharts** — biểu đồ
 - **lucide-react** — icon set
 
 ## Cấu trúc thư mục
@@ -29,16 +21,13 @@ src/
 ├── components/
 │   ├── ui/          # Design system: Button, Card, Badge, DataTable, Drawer, StatCard...
 │   ├── layout/       # AppShell, TopNavbar, Sidebar, PageHeader
-│   └── charts/       # ForecastAreaChart, FunnelSteps
+│   └── auth/         # AuthSplitLayout, RequireAuth
 ├── modules/
-│   ├── admission/    # Trang cho học sinh/phụ huynh
-│   ├── advisor/      # Trang cho tư vấn viên
-│   └── executive/    # Trang cho ban giám đốc
+│   └── example/      # Module mẫu — copy khi thêm actor/dashboard mới
 ├── services/         # 1 hàm / 1 API endpoint, JSDoc mô tả contract (Method, Endpoint, Request/Response)
-├── mock/             # Mock data khớp field-by-field với response mẫu của từng use case
 ├── hooks/            # useAsync — chuẩn hoá loading/error/data cho các trang
 ├── config/           # Cấu hình navigation (module/route)
-└── lib/              # Helper dùng chung (format số, ngày, class names...)
+└── lib/              # Helper dùng chung (authStorage, format số, ngày, class names...)
 ```
 
 ## Cài đặt & chạy
@@ -52,17 +41,22 @@ npm run preview    # xem thử bản build production
 
 ## Kết nối API thật
 
-Hiện tại toàn bộ dữ liệu là **mock data tĩnh** (`src/mock/`), được trả về qua `mockRequest()` trong `src/services/client.js` để giả lập độ trễ mạng — chưa gọi API thật.
-
-Khi backend sẵn sàng, chỉ cần:
+`src/services/client.js` có sẵn `mockRequest()` (giả lập độ trễ, trả mock data) và `request()` (gọi `fetch` thật). Khi backend sẵn sàng:
 1. Khai báo `VITE_API_BASE_URL` trong `.env`.
-2. Trong từng file `src/services/*Service.js`, đổi `mockRequest(mockData)` → `request(path, { method, body, params })` (hàm `request()` dùng `fetch` thật đã có sẵn trong `client.js`).
+2. Trong từng file `src/services/*Service.js`, đổi `mockRequest(mockData)` → `request(path, { method, body, params })`.
 
-Không cần sửa bất kỳ page/component nào — service layer là seam duy nhất giữa UI và dữ liệu.
+Không cần sửa page/component nào — service layer là seam duy nhất giữa UI và dữ liệu.
+
+## Thêm actor/dashboard mới
+
+1. Thêm 1 entry vào `STORAGE_KEY` trong `src/lib/authStorage.js`.
+2. Copy `src/services/authService.js` → thêm hàm `login<Actor>` tương tự `loginExample`.
+3. Copy `src/modules/example/` sang module mới, thêm module vào `src/config/navigation.js`.
+4. Wire route trong `src/App.jsx` (public route + `/login` + `RequireAuth` group), theo đúng pattern của module `example`.
 
 ## Ghi chú
 
-Dự án chưa có luồng xác thực (auth) — mọi route hiện đang public, thông tin người dùng ở đầu trang là placeholder tĩnh.
+Đây là template — Dockerfile, docker-compose.yml, nginx.conf và `.github/workflows/deploy.yml` giữ nguyên so với project gốc để deploy/CI-CD không cần setup lại khi force-push nhánh này vào `main`.
 
 <!-- deploy-check -->
 <!-- deploy-check-2 -->

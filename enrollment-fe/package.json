@@ -1,5 +1,6 @@
 {
-  "name": "ai-enrollment-intelligence-platform",
+  "name": "react-frontend-template",
+  "description": "Reusable React + Vite frontend template",
   "private": true,
   "version": "0.1.0",
   "type": "module",

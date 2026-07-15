@@ -1,15 +1,14 @@
 /**
  * lib/authStorage.js
  * -------------------------------------------------------------------------
- * Advisor and Executive dashboards are two separate JWT domains on the
- * backend (distinct Passport strategies, distinct secrets) — sessions are
- * kept in separate localStorage keys so logging into one never touches
- * the other.
+ * Each dashboard is its own JWT domain on the backend (distinct Passport
+ * strategy, distinct secret) — sessions are kept in separate localStorage
+ * keys so logging into one never touches another. Add a key here per new
+ * domain.
  */
 
 const STORAGE_KEY = {
-  advisor: 'vaic_advisor_session',
-  executive: 'vaic_executive_session',
+  example: 'app_example_session',
 }
 
 export function getSession(domain) {
